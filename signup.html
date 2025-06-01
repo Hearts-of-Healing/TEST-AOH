@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-900 text-white">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BD Signup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+  <div class="bg-gray-800 p-8 rounded shadow-lg max-w-md w-full">
+    <h1 class="text-2xl font-bold mb-4 text-red-400">📝 BD Clan Signup</h1>
+
+    <label class="block mb-2">Roblox Username</label>
+    <input id="username" type="text" class="w-full p-2 mb-4 rounded bg-gray-700 border border-gray-600" />
+
+    <label class="block mb-2">Level</label>
+    <input id="level" type="number" class="w-full p-2 mb-4 rounded bg-gray-700 border border-gray-600" />
+
+    <button onclick="startVerification()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded">Generate Code</button>
+
+    <div id="step-2" class="mt-6 hidden">
+      <p class="mb-2 text-sm text-gray-300">Paste this code in your <strong>Roblox bio</strong>, then click verify:</p>
+      <p id="verify-code" class="font-mono bg-gray-700 p-2 rounded text-center text-xl mb-4"></p>
+      <button onclick="completeVerification()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded">Verify</button>
+    </div>
+
+    <p id="status" class="mt-4 text-green-400 hidden"></p>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBDgadn_l0VLJmgCPzziGbwbXYaIfhn0vQ",
+      authDomain: "aoh-bd-clan.firebaseapp.com",
+      databaseURL: "https://aoh-bd-clan-default-rtdb.firebaseio.com/",
+      projectId: "aoh-bd-clan",
+      storageBucket: "aoh-bd-clan.appspot.com",
+      messagingSenderId: "824398865971",
+      appId: "1:824398865971:web:139890878f47e251ad6546"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let verificationCode = "";
+    let robloxUserId = null;
+
+    function startVerification() {
+      const username = document.getElementById('username').value.trim();
+      const level = parseInt(document.getElementById('level').value);
+      if (!username || !level || level < 1) return alert("Please enter valid username and level");
+
+      verificationCode = "BD-" + Math.floor(1000 + Math.random() * 9000);
+      localStorage.setItem("verifyUsername", username);
+      localStorage.setItem("verifyLevel", level);
+      localStorage.setItem("verifyCode", verificationCode);
+
+      document.getElementById('verify-code').textContent = verificationCode;
+      document.getElementById('step-2').classList.remove("hidden");
+    }
+
+    async function completeVerification() {
+      const username = localStorage.getItem("verifyUsername");
+      const level = parseInt(localStorage.getItem("verifyLevel"));
+      const code = localStorage.getItem("verifyCode");
+
+      const res = await fetch("https://users.roblox.com/v1/usernames/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usernames: [username] })
+      });
+
+      const data = await res.json();
+      const user = data.data[0];
+      if (!user) return alert("User not found");
+
+      robloxUserId = user.id;
+
+      const profile = await fetch(`https://users.roblox.com/v1/users/${robloxUserId}`).then(r => r.json());
+
+      if (!profile.description.includes(code)) {
+        return alert("Verification code not found in bio. Make sure you saved it.");
+      }
+
+      // Add to members and verifiedAdmins
+      db.ref("clanData/members").once("value", snapshot => {
+        const members = snapshot.val() || [];
+        members.push({ username, level });
+        db.ref("clanData/members").set(members);
+      });
+
+      db.ref("verifiedAdmins/" + username).set(true);
+
+      localStorage.setItem("robloxUsername", username);
+      localStorage.setItem("isAdmin", "true");
+
+      document.getElementById("status").textContent = "✅ Verified and signed up! Redirecting...";
+      document.getElementById("status").classList.remove("hidden");
+
+      setTimeout(() => {
+        window.location.href = "index.html"; // or dashboard.html
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
