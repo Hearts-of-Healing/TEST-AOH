@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-900 text-white">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BD Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+  <div class="bg-gray-800 p-8 rounded shadow-lg max-w-md w-full">
+    <h1 class="text-2xl font-bold mb-4 text-red-400">🔐 BD Clan Login</h1>
+
+    <label class="block mb-2">Roblox Username</label>
+    <input id="login-username" type="text" class="w-full p-2 mb-4 rounded bg-gray-700 border border-gray-600" />
+
+    <button onclick="login()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded">Login</button>
+
+    <p id="status" class="mt-4 text-green-400 hidden">✅ Logged in! Redirecting...</p>
+    <p id="error" class="mt-4 text-red-400 hidden">❌ Not verified. Please sign up first.</p>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBDgadn_l0VLJmgCPzziGbwbXYaIfhn0vQ",
+      authDomain: "aoh-bd-clan.firebaseapp.com",
+      databaseURL: "https://aoh-bd-clan-default-rtdb.firebaseio.com/",
+      projectId: "aoh-bd-clan",
+      storageBucket: "aoh-bd-clan.appspot.com",
+      messagingSenderId: "824398865971",
+      appId: "1:824398865971:web:139890878f47e251ad6546"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function login() {
+      const username = document.getElementById("login-username").value.trim();
+      if (!username) return alert("Please enter your Roblox username.");
+
+      db.ref("verifiedAdmins/" + username).once("value", snapshot => {
+        if (snapshot.exists()) {
+          localStorage.setItem("robloxUsername", username);
+          localStorage.setItem("isAdmin", "true");
+          document.getElementById("status").classList.remove("hidden");
+          document.getElementById("error").classList.add("hidden");
+          setTimeout(() => {
+            window.location.href = "index.html"; // or dashboard.html
+          }, 2000);
+        } else {
+          document.getElementById("error").classList.remove("hidden");
+        }
+      });
+    }
+  </script>
+</body>
+</html>
