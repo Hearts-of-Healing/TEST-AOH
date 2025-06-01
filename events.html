@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-900 text-white">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BD Events</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <style>
+    #calendar {
+      max-width: 900px;
+      margin: 2rem auto;
+      background-color: #1f2937;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body class="p-6">
+
+  <h1 class="text-3xl font-bold text-center text-red-400 mb-6">📅 BD Clan Events</h1>
+  <div id="calendar"></div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBDgadn_l0VLJmgCPzziGbwbXYaIfhn0vQ",
+      authDomain: "aoh-bd-clan.firebaseapp.com",
+      databaseURL: "https://aoh-bd-clan-default-rtdb.firebaseio.com/",
+      projectId: "aoh-bd-clan",
+      storageBucket: "aoh-bd-clan.appspot.com",
+      messagingSenderId: "824398865971",
+      appId: "1:824398865971:web:139890878f47e251ad6546"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const calendarEl = document.getElementById('calendar');
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        editable: isAdmin,
+        selectable: isAdmin,
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: isAdmin ? 'dayGridMonth,timeGridWeek,timeGridDay addEventButton' : 'dayGridMonth,timeGridWeek'
+        },
+        customButtons: {
+          addEventButton: {
+            text: 'Add Event',
+            click: function () {
+              const title = prompt('Event Title:');
+              const dateStr = prompt('Event Date (YYYY-MM-DD):');
+              if (title && dateStr) {
+                const newEvent = { title, start: dateStr };
+                calendar.addEvent(newEvent);
+                saveEventToFirebase(newEvent);
+              }
+            }
+          }
+        },
+        events: function (fetchInfo, successCallback) {
+          db.ref("events").once("value", snapshot => {
+            const eventData = snapshot.val() || [];
+            successCallback(eventData);
+          });
+        },
+        eventChange: function(info) {
+          updateAllEvents(calendar.getEvents());
+        },
+        eventRemove: function(info) {
+          updateAllEvents(calendar.getEvents());
+        }
+      });
+
+      calendar.render();
+    });
+
+    function saveEventToFirebase(event) {
+      db.ref("events").once("value", snapshot => {
+        const current = snapshot.val() || [];
+        current.push(event);
+        db.ref("events").set(current);
+      });
+    }
+
+    function updateAllEvents(events) {
+      const formatted = events.map(e => ({
+        title: e.title,
+        start: e.startStr,
+        end: e.endStr || null
+      }));
+      db.ref("events").set(formatted);
+    }
+  </script>
+</body>
+</html>
