@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOH - BD Clan Level Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Keyframe animations */
+        @keyframes groundSlam {
+            0% {
+                transform: translateY(-100px) scale(1.5);
+                opacity: 0;
+                text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+            }
+            60% {
+                transform: translateY(20px) scale(1.1);
+                opacity: 1;
+                text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+            }
+            80% {
+                transform: translateY(-10px) scale(1.05);
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                text-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); }
+            50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        
+        /* Animation classes */
+        .slam-animation {
+            animation: groundSlam 1.2s ease-out forwards;
+        }
+        
+        .fade-in {
+            animation: fadeIn 1s ease-in forwards;
+            animation-delay: 1s;
+            opacity: 0;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        .glow-animation {
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        .shake {
+            animation: shake 0.5s;
+        }
+        
+        /* Custom styles */
+        .title-container {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .title-shadow {
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+        }
+        
+        .btn-hover-effect {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-hover-effect::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.5s;
+        }
+        
+        .btn-hover-effect:hover::after {
+            left: 100%;
+        }
+        
+        /* Theme colors */
+        .demon-theme {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        
+        .angel-theme {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .demon-text {
+            color: #ff4d4d;
+        }
+        
+        .angel-text {
+            color: #4d79ff;
+        }
+        
+        .demon-bg {
+            background-color: #1a1a2e;
+        }
+        
+        .angel-bg {
+            background-color: #f5f7fa;
+        }
+        
+        .demon-card {
+            background-color: #16213e;
+            border-left: 4px solid #ff4d4d;
+        }
+        
+        .angel-card {
+            background-color: #c3cfe2;
+            border-left: 4px solid #4d79ff;
+        }
+        
+        .demon-btn {
+            background-color: #ff4d4d;
+            color: white;
+        }
+        
+        .angel-btn {
+            background-color: #4d79ff;
+            color: white;
+        }
+        
+        .demon-btn:hover {
+            background-color: #ff1a1a;
+        }
+        
+        .angel-btn:hover {
+            background-color: #1a53ff;
+        }
+        
+        /* Progress bar colors */
+        .progress-legendary {
+            background-color: #ff0000;
+        }
+        
+        .progress-epic {
+            background-color: #aa00ff;
+        }
+        
+        .progress-rare {
+            background-color: #0055ff;
+        }
+        
+        .progress-uncommon {
+            background-color: #00aa00;
+        }
+        
+        .progress-common {
+            background-color: #aaaaaa;
+        }
+        
+        /* Rank colors */
+        .rank-legendary {
+            color: #ff0000;
+        }
+        
+        .rank-epic {
+            color: #aa00ff;
+        }
+        
+        .rank-rare {
+            color: #0055ff;
+        }
+        
+        .rank-uncommon {
+            color: #00aa00;
+        }
+        
+        .rank-common {
+            color: #aaaaaa;
+        }
+        
+        /* Secret admin button */
+        .secret-button {
+            position: absolute;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* Admin note */
+        .admin-note {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #16213e;
+            border: 2px solid #ff4d4d;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            max-width: 300px;
+            text-align: center;
+            display: none;
+        }
+        
+        .admin-note button {
+            margin-top: 15px;
+            padding: 5px 15px;
+            background: #ff4d4d;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Level badge styles */
+        .level-badge {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="demon-theme text-white min-h-screen overflow-x-hidden">
+    <!-- Main Menu -->
+    <div id="main-menu" class="flex flex-col items-center justify-center min-h-screen relative">
+        <!-- Decorative elements -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden">
+            <div class="absolute top-20 left-10 w-20 h-20 rounded-full bg-red-500 opacity-10 blur-xl"></div>
+            <div class="absolute bottom-10 right-20 w-32 h-32 rounded-full bg-blue-500 opacity-10 blur-xl"></div>
+            <div class="absolute top-1/3 right-1/4 w-16 h-16 rounded-full bg-purple-500 opacity-10 blur-xl"></div>
+        </div>
+        
+        <div class="title-container mb-12 relative">
+            <h1 id="title" class="text-6xl md:text-8xl font-bold text-center demon-text slam-animation title-shadow relative">
+                <span class="relative inline-block">
+                    AOH
+                    <button class="secret-button" style="width: 100%; height: 100%; left: 0;" onclick="showAdminNote()"></button>
+                </span>
+                <span class="inline-block">- BD Clan Level Tracker</span>
+            </h1>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-8 fade-in">
+            <button id="play-btn" class="btn-hover-effect demon-btn font-bold py-3 px-6 rounded-lg text-xl transition-all duration-300 transform hover:scale-105 pulse-animation">
+                <i class="fas fa-play mr-2"></i> View Members
+            </button>
+            <button id="admin-btn" class="btn-hover-effect bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg text-xl transition-all duration-300 transform hover:scale-105 pulse-animation" style="animation-delay: 0.5s;">
+                <i class="fas fa-lock mr-2"></i> Admin Access
+            </button>
+        </div>
+      <div class="flex gap-4 mt-6">
+  <a href="login.html" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+    Login
+  </a>
+  <a href="signup.html" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+    Sign Up
+  </a>
+</div>
+
+    </div>
+
+    <!-- Admin Note (hidden by default) -->
+    <div class="admin-note" id="admin-note">
+        <h3>Admin Passkey</h3>
+        <p>The admin passkey is: <strong>ZenIsTrashBDFR</strong></p>
+        <p>Keep this secret!</p>
+        <button onclick="hideAdminNote()">Close</button>
+    </div>
+
+    <!-- Admin Access Form -->
+    <div id="admin-access-container" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50">
+        <div class="demon-bg p-8 rounded-lg shadow-xl w-full max-w-md">
+            <button onclick="hideAdminAccess()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+            
+            <h2 class="text-3xl font-bold mb-6 demon-text">Admin Access</h2>
+            
+            <div class="mb-6">
+                <label for="admin-key" class="block mb-2">Enter Admin Key</label>
+                <input type="password" id="admin-key" class="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-red-500">
+                <p id="admin-key-error" class="text-red-500 text-sm mt-1 hidden">Invalid admin key</p>
+            </div>
+            
+            <button onclick="verifyAdminKey()" class="w-full demon-btn py-3 px-4 rounded-lg font-bold transition duration-300 hover:bg-red-700">
+                Verify
+            </button>
+        </div>
+    </div>
+    
+    <!-- Members Dashboard -->
+    <div id="members-dashboard" class="hidden min-h-screen p-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold demon-text">Clan Members</h2>
+                
+                <div class="flex space-x-4">
+                    <button id="add-member-btn" class="demon-btn py-2 px-4 rounded-lg font-bold transition duration-300 hover:bg-red-700 hidden">
+                        <i class="fas fa-plus mr-2"></i> Add Member
+                    </button>
+                    
+                    <button onclick="logout()" class="bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded-lg font-bold transition duration-300">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Back
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-6 hidden" id="admin-controls">
+                <div class="flex items-center space-x-4">
+                    <input type="password" id="admin-key-input" placeholder="Enter admin key" class="p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-red-500">
+                    <button onclick="verifyDashboardAdminKey()" class="demon-btn py-2 px-4 rounded-lg font-bold transition duration-300 hover:bg-red-700">
+                        Verify Admin
+                    </button>
+                </div>
+            </div>
+            
+            <div id="members-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Members will be rendered here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Member Modal -->
+    <div id="add-member-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50">
+        <div class="demon-bg p-8 rounded-lg shadow-xl w-full max-w-md">
+            <button onclick="hideAddMemberModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+            
+            <h2 class="text-3xl font-bold mb-6 demon-text">Add New Member</h2>
+            
+            <div class="mb-4">
+                <label for="new-member-username" class="block mb-2">Username</label>
+                <input type="text" id="new-member-username" class="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-red-500">
+                <p id="new-username-error" class="text-red-500 text-sm mt-1 hidden"></p>
+            </div>
+            
+            <div class="mb-6">
+                <label for="new-member-level" class="block mb-2">Level</label>
+                <input type="number" id="new-member-level" class="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-red-500">
+            </div>
+            
+            <button onclick="addNewMember()" class="w-full demon-btn py-3 px-4 rounded-lg font-bold transition duration-300 hover:bg-red-700">
+                Add Member
+            </button>
+        </div>
+    </div>
+    
+    <!-- Edit Member Modal -->
+    <div id="edit-member-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50">
+        <div class="demon-bg p-8 rounded-lg shadow-xl w-full max-w-md">
+            <button onclick="hideEditMemberModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+            
+            <h2 class="text-3xl font-bold mb-6 demon-text">Edit Member</h2>
+            
+            <div class="mb-4">
+                <label for="edit-member-username" class="block mb-2">Username</label>
+                <input type="text" id="edit-member-username" class="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-red-500" disabled>
+            </div>
+            
+            <div class="mb-6">
+                <label for="edit-member-level" class="block mb-2">Level</label>
+                <input type="number" id="edit-member-level" class="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-red-500">
+            </div>
+            
+            <div class="flex space-x-4">
+                <button onclick="updateMemberLevel()" class="flex-1 demon-btn py-3 px-4 rounded-lg font-bold transition duration-300 hover:bg-red-700">
+                    Update
+                </button>
+                <button onclick="confirmDeleteMember()" class="flex-1 bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg font-bold transition duration-300">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50">
+        <div class="demon-bg p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 id="confirm-title" class="text-3xl font-bold mb-4 demon-text"></h2>
+            <p id="confirm-message" class="mb-6"></p>
+            
+            <div class="flex space-x-4">
+                <button onclick="executeConfirmedAction()" class="flex-1 demon-btn py-3 px-4 rounded-lg font-bold transition duration-300 hover:bg-red-700">
+                    Confirm
+                </button>
+                <button onclick="hideConfirmModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg font-bold transition duration-300">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Integration -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDgadn_l0VLJmgCPzziGbwbXYaIfhn0vQ",
+            authDomain: "aoh-bd-clan.firebaseapp.com",
+            databaseURL: "https://aoh-bd-clan-default-rtdb.firebaseio.com/",
+            projectId: "aoh-bd-clan",
+            storageBucket: "aoh-bd-clan.firebasestorage.app",
+            messagingSenderId: "824398865971",
+            appId: "1:824398865971:web:139890878f47e251ad6546",
+            measurementId: "G-4V15NCH2RH"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Database functions
+        function initializeData() {
+            const defaultData = {
+                adminKey: "ZenIsTrashBDFR",
+                members: [
+                    { username: "Keen", level: 13000 },
+                    { username: "Kyle", level: 8100 },
+                    { username: "Tri", level: 5400 },
+                    { username: "Soldier", level: 5400 },
+                    { username: "Zen", level: 5000 },
+                    { username: "Ban", level: 3200 },
+                    { username: "Void", level: 2100 },
+                    { username: "BD_Ravynthal", level: 1713 },
+                    { username: "Yosh", level: 600 },
+                    { username: "DUCK", level: 490 }
+                ]
+            };
+
+            // Check if data exists, if not, set default data
+            database.ref('clanData').once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    database.ref('clanData').set(defaultData)
+                        .then(() => console.log("✅ Default data initialized!"))
+                        .catch(error => console.error("❌ Error initializing data:", error));
+                }
+            });
+        }
+
+        function getData(callback) {
+            database.ref('clanData').on('value', snapshot => {
+                callback(snapshot.val());
+            });
+        }
+
+        function saveData(data) {
+            database.ref('clanData').set(data);
+        }
+
+        function getMembers(callback) {
+            getData(data => {
+                callback(data.members);
+            });
+        }
+
+        function getAdminKey(callback) {
+            getData(data => {
+                callback(data.adminKey);
+            });
+        }
+
+        function updateMembers(updatedMembers) {
+            getData(data => {
+                data.members = updatedMembers;
+                saveData(data);
+            });
+        }
+
+        // Test Firebase connection
+        function testFirebaseConnection() {
+            database.ref('test').set({
+                test: "connection working"
+            }).then(() => {
+                console.log("Firebase connection successful");
+            }).catch(error => {
+                console.error("Firebase connection error:", error);
+            });
+        }
+
+        // Application state
+        let isAdmin = false;
+        let currentAction = null;
+        let currentMember = null;
+
+        // DOM Elements
+        const mainMenu = document.getElementById('main-menu');
+        const adminAccessContainer = document.getElementById('admin-access-container');
+        const membersDashboard = document.getElementById('members-dashboard');
+        const membersGrid = document.getElementById('members-grid');
+        const addMemberBtn = document.getElementById('add-member-btn');
+        const adminControls = document.getElementById('admin-controls');
+        const addMemberModal = document.getElementById('add-member-modal');
+        const editMemberModal = document.getElementById('edit-member-modal');
+        const confirmModal = document.getElementById('confirm-modal');
+        const playBtn = document.getElementById('play-btn');
+        const adminBtn = document.getElementById('admin-btn');
+        const adminNote = document.getElementById('admin-note');
+
+        // UI Functions
+        function showAdminNote() {
+            adminNote.style.display = 'block';
+        }
+
+        function hideAdminNote() {
+            adminNote.style.display = 'none';
+        }
+
+        function showAdminAccess() {
+            adminAccessContainer.classList.remove('hidden');
+        }
+
+        function hideAdminAccess() {
+            adminAccessContainer.classList.add('hidden');
+            document.getElementById('admin-key').value = '';
+            document.getElementById('admin-key-error').classList.add('hidden');
+        }
+
+        function verifyAdminKey() {
+            const key = document.getElementById('admin-key').value;
+            
+            if (!key) {
+                document.getElementById('admin-key-error').textContent = "Please enter an admin key";
+                document.getElementById('admin-key-error').classList.remove('hidden');
+                return;
+            }
+            
+            getAdminKey(adminKey => {
+                if (!adminKey) {
+                    console.error("No admin key found in database");
+                    return;
+                }
+                
+                if (key === adminKey) {
+                    isAdmin = true;
+                    hideAdminAccess();
+                    showMembersDashboard();
+                    adminControls.classList.remove('hidden');
+                    addMemberBtn.classList.remove('hidden');
+                } else {
+                    document.getElementById('admin-key-error').textContent = "Invalid admin key";
+                    document.getElementById('admin-key-error').classList.remove('hidden');
+                    document.getElementById('admin-key').classList.add('shake');
+                    setTimeout(() => document.getElementById('admin-key').classList.remove('shake'), 500);
+                }
+            });
+        }
+      function enableAdminTools() {
+  isAdmin = true;
+  // Show admin buttons, modals, etc.
+  document.getElementById("add-member-btn").classList.remove("hidden");
+  updateAdminUI(); // Your existing function
+}
+
+        function verifyDashboardAdminKey() {
+            const key = document.getElementById('admin-key-input').value;
+            
+            getAdminKey(adminKey => {
+                if (key === adminKey) {
+                    isAdmin = true;
+                    document.getElementById('admin-key-input').value = '';
+                    adminControls.classList.add('hidden');
+                    addMemberBtn.classList.remove('hidden');
+                    updateAdminUI();
+                } else {
+                    document.getElementById('admin-key-input').classList.add('shake');
+                    setTimeout(() => document.getElementById('admin-key-input').classList.remove('shake'), 500);
+                }
+            });
+        }
+
+        function showMembersDashboard() {
+            mainMenu.classList.add('hidden');
+            adminAccessContainer.classList.add('hidden');
+            membersDashboard.classList.remove('hidden');
+            renderMembersGrid();
+        }
+
+        function updateAdminUI() {
+            if (isAdmin) {
+                const memberCards = document.querySelectorAll('.member-card');
+                memberCards.forEach(card => {
+                    if (!card.querySelector('.edit-btn')) {
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'edit-btn absolute top-2 right-2 bg-yellow-600 hover:bg-yellow-700 text-white p-1 rounded-full transition duration-300';
+                        editBtn.innerHTML = '<i class="fas fa-edit text-xs"></i>';
+                        editBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            const username = card.getAttribute('data-username');
+                            showEditMemberModal(username);
+                        };
+                        card.appendChild(editBtn);
+                    }
+                });
+            } else {
+                const editButtons = document.querySelectorAll('.edit-btn');
+                editButtons.forEach(btn => btn.remove());
+            }
+        }
+
+        function renderMembersGrid() {
+            membersGrid.innerHTML = '';
+            
+            getMembers(members => {
+                const sortedMembers = [...members].sort((a, b) => b.level - a.level);
+                
+                sortedMembers.forEach((member, index) => {
+                    const memberCard = document.createElement('div');
+                    memberCard.className = 'member-card demon-card p-6 rounded-lg shadow-lg relative cursor-pointer transition-all duration-300';
+                    memberCard.setAttribute('data-username', member.username);
+                    
+                    if (isAdmin) {
+                        memberCard.classList.add('hover:bg-gray-700');
+                        memberCard.onclick = () => showEditMemberModal(member.username);
+                    }
+                    
+                    let rankClass = 'rank-common';
+                    let progressClass = 'progress-common';
+                    
+                    if (member.level >= 5000) {
+                        rankClass = 'rank-legendary';
+                        progressClass = 'progress-legendary';
+                    } else if (member.level >= 2000) {
+                        rankClass = 'rank-epic';
+                        progressClass = 'progress-epic';
+                    } else if (member.level >= 1000) {
+                        rankClass = 'rank-rare';
+                        progressClass = 'progress-rare';
+                    } else if (member.level >= 500) {
+                        rankClass = 'rank-uncommon';
+                        progressClass = 'progress-uncommon';
+                    }
+                    
+                    const progressPercentage = Math.min(100, (member.level / 15000) * 100);
+                    
+                    memberCard.innerHTML = `
+                        <div class="flex items-center mb-4">
+                            <div class="level-badge ${rankClass}">
+                                ${member.level}
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-xl font-bold">${member.username}</h3>
+                                <p class="text-gray-400">Rank #${index + 1}</p>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div class="${progressClass} h-2.5 rounded-full" style="width: ${progressPercentage}%"></div>
+                        </div>
+                    `;
+                    
+                    membersGrid.appendChild(memberCard);
+                });
+                
+                if (isAdmin) {
+                    updateAdminUI();
+                }
+            });
+        }
+
+        function showAddMemberModal() {
+            addMemberModal.classList.remove('hidden');
+            document.getElementById('new-member-username').value = '';
+            document.getElementById('new-member-level').value = '';
+            document.getElementById('new-username-error').classList.add('hidden');
+        }
+
+        function hideAddMemberModal() {
+            addMemberModal.classList.add('hidden');
+        }
+
+        function showEditMemberModal(username) {
+            if (!isAdmin) return;
+            
+            getMembers(members => {
+                const member = members.find(m => m.username === username);
+                if (!member) return;
+                
+                currentMember = member;
+                
+                document.getElementById('edit-member-username').value = member.username;
+                document.getElementById('edit-member-level').value = member.level;
+                editMemberModal.classList.remove('hidden');
+            });
+        }
+
+        function hideEditMemberModal() {
+            editMemberModal.classList.add('hidden');
+            currentMember = null;
+        }
+
+        function addNewMember() {
+            const username = document.getElementById('new-member-username').value.trim();
+            const level = parseInt(document.getElementById('new-member-level').value);
+            
+            if (!username) {
+                document.getElementById('new-username-error').textContent = "Username is required";
+                document.getElementById('new-username-error').classList.remove('hidden');
+                document.getElementById('new-member-username').classList.add('shake');
+                setTimeout(() => document.getElementById('new-member-username').classList.remove('shake'), 500);
+                return;
+            }
+            
+            getMembers(members => {
+                const usernameExists = members.some(m => m.username.toLowerCase() === username.toLowerCase());
+                if (usernameExists) {
+                    document.getElementById('new-username-error').textContent = "Username already exists";
+                    document.getElementById('new-username-error').classList.remove('hidden');
+                    document.getElementById('new-member-username').classList.add('shake');
+                    setTimeout(() => document.getElementById('new-member-username').classList.remove('shake'), 500);
+                    return;
+                }
+                
+                if (!level || level < 1) {
+                    alert("Please enter a valid level");
+                    return;
+                }
+                
+                const newMember = {
+                    username: username,
+                    level: level
+                };
+                
+                const updatedMembers = [...members, newMember];
+                updateMembers(updatedMembers);
+                
+                hideAddMemberModal();
+                renderMembersGrid();
+            });
+        }
+
+        function updateMemberLevel() {
+            const newLevel = parseInt(document.getElementById('edit-member-level').value);
+            
+            if (!newLevel || newLevel < 1) {
+                alert("Please enter a valid level");
+                return;
+            }
+            
+            getMembers(members => {
+                const memberIndex = members.findIndex(m => m.username === currentMember.username);
+                if (memberIndex !== -1) {
+                    const updatedMembers = [...members];
+                    updatedMembers[memberIndex].level = newLevel;
+                    updateMembers(updatedMembers);
+                    
+                    hideEditMemberModal();
+                    renderMembersGrid();
+                }
+            });
+        }
+
+        function confirmDeleteMember() {
+            currentAction = 'delete';
+            document.getElementById('confirm-title').textContent = "Delete Member";
+            document.getElementById('confirm-message').textContent = `Are you sure you want to delete ${currentMember.username}? This action cannot be undone.`;
+            confirmModal.classList.remove('hidden');
+        }
+
+        function hideConfirmModal() {
+            confirmModal.classList.add('hidden');
+            currentAction = null;
+        }
+
+        function executeConfirmedAction() {
+            if (currentAction === 'delete' && currentMember) {
+                getMembers(members => {
+                    const memberIndex = members.findIndex(m => m.username === currentMember.username);
+                    if (memberIndex !== -1) {
+                        const updatedMembers = [...members];
+                        updatedMembers.splice(memberIndex, 1);
+                        updateMembers(updatedMembers);
+                        
+                        hideEditMemberModal();
+                        hideConfirmModal();
+                        renderMembersGrid();
+                    }
+                });
+            }
+            
+            currentAction = null;
+            currentMember = null;
+        }
+
+        function logout() {
+            isAdmin = false;
+            membersDashboard.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+            adminControls.classList.add('hidden');
+            addMemberBtn.classList.add('hidden');
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            if (playBtn) playBtn.addEventListener('click', showMembersDashboard);
+            if (adminBtn) adminBtn.addEventListener('click', showAdminAccess);
+            if (addMemberBtn) addMemberBtn.addEventListener('click', showAddMemberModal);
+            
+            const secretBtn = document.querySelector('.secret-button');
+            if (secretBtn) {
+                secretBtn.addEventListener('click', showAdminNote);
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeData();
+            setupEventListeners();
+            testFirebaseConnection();
+        });
+    </script>
+  <script>
+  const db = firebase.database();
+  const robloxUsername = localStorage.getItem("robloxUsername");
+  const isAdmin = localStorage.getItem("isAdmin");
+
+  // Auto-login logic
+  document.addEventListener("DOMContentLoaded", () => {
+    if (robloxUsername && isAdmin === "true") {
+      db.ref("verifiedAdmins/" + robloxUsername).once("value", snapshot => {
+        if (snapshot.exists()) {
+          // User is verified
+          enableAdminTools(); // Replace with your function to unlock admin features
+        } else {
+          localStorage.removeItem("robloxUsername");
+          localStorage.removeItem("isAdmin");
+        }
+      });
+    }
+  });
+
+  function logout() {
+    localStorage.removeItem("robloxUsername");
+    localStorage.removeItem("isAdmin");
+    location.href = "login.html"; // or reload the page
+  }
+</script>
+
+</body>
+</html>
